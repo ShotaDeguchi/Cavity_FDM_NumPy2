@@ -2,3 +2,5 @@
 
 Updated version of [Cavity_FDM_NumPy](https://github.com/ShotaDeguchi/Cavity_FDM_NumPy)
 
+For a mathematical understanding of finite difference methods, a wonderful resource can be found [here](https://folk.ntnu.no/leifh/teaching/tkt4140/._main000.html). 
+
