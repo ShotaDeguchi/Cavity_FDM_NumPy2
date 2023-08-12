@@ -3,7 +3,7 @@
 2D lid-driven cavity flow simulation with Finite Difference Method
 
 space:
-    convection:        Kawamura-Kuwahara (Kawamura&Kuwahara 1984, Kawamura et al. 1986)
+    convection:        Lax-Wendroff (Lax&Wendroff 1960)
     diffusion:         2nd order central
     pressure gradient: 2nd order central
 
@@ -11,7 +11,7 @@ time:
     projection method (Chorin 1968)
 
 grid:
-    staggered grid (Arakawa B-type grid, Arakawa&Lamb 1977)
+    staggered grid (Arakawa C-type grid, Arakawa&Lamb 1977)
 ********************************************************************************
 """
 
@@ -28,7 +28,6 @@ sys.path.append(
     os.path.join(os.path.dirname(__file__), "..", "..")
 )
 from reference import *
-from solver import *
 
 ################################################################################
 
@@ -47,13 +46,6 @@ def arguments():
         type=float,
         default=1000.,
         help="Reynolds number"
-    )
-    parser.add_argument(
-        "-s",
-        "--solver",
-        type=str,
-        default="Jacobi",
-        help="solver for pressure Poisson equation"
     )
     parser.add_argument(
         "-t",
@@ -95,6 +87,7 @@ def main(args):
     Re = args.Re
 
     # visualization setting
+    # plt.style.use("bmh")
     plt.rcParams["font.family"] = "Times New Roman"
     plt.rcParams["mathtext.fontset"] = "cm"
     plt.rcParams["legend.framealpha"] = 1.
@@ -104,8 +97,8 @@ def main(args):
     # domain
     Lx, Ly = 1., 1.
     dx, dy = dx, dx
-    x = np.arange(0. - dx, Lx + 2. * dx, dx)   # long stencil
-    y = np.arange(0. - dy, Ly + 2. * dy, dy)
+    x = np.arange(0., Lx + dx, dx)
+    y = np.arange(0., Ly + dy, dy)
     Nx, Ny = len(x), len(y)
     X, Y = np.meshgrid(x, y)
 
@@ -114,23 +107,19 @@ def main(args):
     h = min(dx, dy)  # characteristic length (discretization parameter)
     k = 1. / Re      # diffusion rate
 
-    dt1 = h / U                # CFL
+    dt1 = h / U               # CFL
     dt2 = 1. / 2. * h**2 / k   # diffusion
     dt = min(dt1, dt2)         # critical timestep
     dt *= .2                   # safety
 
     # coefficient for numerical diffusion
-    beta = 1. / 4.
+    beta = 0.
 
     # variables
-    u = np.zeros(shape=(Ny, Nx)) + 1e-3
-    v = np.zeros(shape=(Ny, Nx)) + 1e-3
-    p = np.zeros(shape=(Ny-1, Nx-1)) + 1e-3
-    b = np.zeros(shape=(Ny-1, Nx-1)) + 1e-3
-
-    u_tol = args.u_tol    # convergence tolerance for velocity
-    p_tol = args.p_tol    # convergence tolerance for pressure
-    it_max = args.it_max  # max iteration
+    u = np.zeros(shape=(Ny+1, Nx)) + 1e-3
+    v = np.zeros(shape=(Ny, Nx+1)) + 1e-3
+    p = np.zeros(shape=(Ny+1, Nx+1)) + 1e-3
+    b = np.zeros(shape=(Ny+1, Nx+1)) + 1e-3
 
     # reference solutions
     ref_Ghia = Ghia(Re)
@@ -165,7 +154,7 @@ def main(args):
     n = 0
     t = 0.
     u_res = 9999.
-    while u_res > u_tol:
+    while u_res > args.u_tol:
         # previous velocity
         u_old = u.copy()
         v_old = v.copy()
@@ -174,65 +163,69 @@ def main(args):
         u_hat = u.copy()
         v_hat = v.copy()
 
-        # convection
-        u_u_x = u_old[2:-2, 2:-2] * (- u_old[2:-2, 4:] + 8. * u_old[2:-2, 3:-1] - 8. * u_old[2:-2, 1:-3] + u_old[2:-2, :-4]) / (12. * dx) \
-                + beta * np.abs(u_old[2:-2, 2:-2]) * dx**3 * (u_old[2:-2, 4:] - 4. * u_old[2:-2, 3:-1] + 6. * u_old[2:-2, 2:-2] - 4. * u_old[2:-2, 1:-3] + u_old[2:-2, :-4]) / dx**4
-        v_u_y = v_old[2:-2, 2:-2] * (- u_old[4:, 2:-2] + 8. * u_old[3:-1, 2:-2] - 8. * u_old[1:-3, 2:-2] + u_old[:-4, 2:-2]) / (12. * dy) \
-                + beta * np.abs(v_old[2:-2, 2:-2]) * dy**3 * (u_old[4:, 2:-2] - 4. * u_old[3:-1, 2:-2] + 6. * u_old[2:-2, 2:-2] - 4. * u_old[1:-3, 2:-2] + u_old[:-4, 2:-2]) / dy**4
-        u_v_x = u_old[2:-2, 2:-2] * (- v_old[2:-2, 4:] + 8. * v_old[2:-2, 3:-1] - 8. * v_old[2:-2, 1:-3] + v_old[2:-2, :-4]) / (12. * dx) \
-                + beta * np.abs(u_old[2:-2, 2:-2]) * dx**3 * (v_old[2:-2, 4:] - 4. * v_old[2:-2, 3:-1] + 6. * v_old[2:-2, 2:-2] - 4. * v_old[2:-2, 1:-3] + v_old[2:-2, :-4]) / dx**4
-        v_v_y = v_old[2:-2, 2:-2] * (- v_old[4:, 2:-2] + 8. * v_old[3:-1, 2:-2] - 8. * v_old[1:-3, 2:-2] + v_old[:-4, 2:-2]) / (12. * dy) \
-                + beta * np.abs(v_old[2:-2, 2:-2]) * dy**3 * (v_old[4:, 2:-2] - 4. * v_old[3:-1, 2:-2] + 6. * v_old[2:-2, 2:-2] - 4. * v_old[1:-3, 2:-2] + v_old[:-4, 2:-2]) / dy**4
-        conv_u = u_u_x + v_u_y
-        conv_v = u_v_x + v_v_y
+        # 1st order derivatives
+        u_x = (u_old[1:-1, 2:] - u_old[1:-1, :-2]) / (2. * dx)
+        u_y = (u_old[2:, 1:-1] - u_old[:-2, 1:-1]) / (2. * dy)
+        v_x = (v_old[1:-1, 2:] - v_old[1:-1, :-2]) / (2. * dx)
+        v_y = (v_old[2:, 1:-1] - v_old[:-2, 1:-1]) / (2. * dy)
 
         # 2nd order derivatives
-        u_xx = (u_old[2:-2, 3:-1] - 2. * u_old[2:-2, 2:-2] + u_old[2:-2, 1:-3]) / dx**2
-        u_yy = (u_old[3:-1, 2:-2] - 2. * u_old[2:-2, 2:-2] + u_old[1:-3, 2:-2]) / dy**2
-        v_xx = (v_old[2:-2, 3:-1] - 2. * v_old[2:-2, 2:-2] + v_old[2:-2, 1:-3]) / dx**2
-        v_yy = (v_old[3:-1, 2:-2] - 2. * v_old[2:-2, 2:-2] + v_old[1:-3, 2:-2]) / dy**2
-        lap_u = u_xx + u_yy   # Laplacian
-        lap_v = v_xx + v_yy
+        u_xx = (u_old[1:-1, 2:] - 2. * u_old[1:-1, 1:-1] + u_old[1:-1, :-2]) / dx**2
+        u_yy = (u_old[2:, 1:-1] - 2. * u_old[1:-1, 1:-1] + u_old[:-2, 1:-1]) / dy**2
+        v_xx = (v_old[1:-1, 2:] - 2. * v_old[1:-1, 1:-1] + v_old[1:-1, :-2]) / dx**2
+        v_yy = (v_old[2:, 1:-1] - 2. * v_old[1:-1, 1:-1] + v_old[:-2, 1:-1]) / dy**2
 
+        # convection
+        # u_bar: interpolated u at v point
+        # v_bar: interpolated v at u point
+        u_bar = 1. / 4. * (
+            u_old[1:-2, 1:] \
+            + u_old[1:-2, :-1] \
+            + u_old[2:-1, 1:] \
+            + u_old[2:-1, :-1]
+        )
+        v_bar = 1. / 4. * (
+            v_old[1:, 1:-2] \
+            + v_old[:-1, 1:-2] \
+            + v_old[1:, 2:-1] \
+            + v_old[:-1, 2:-1]
+        )
+        # convection (Lax-Wendroff)
+        u_u_x = u_old[1:-1, 1:-1] * u_x
+        v_u_y = v_bar * u_y
+        u_v_x = u_bar * v_x
+        v_v_y = v_old[1:-1, 1:-1] * v_y
+        # numerical diffusion (Lax-Wendroff)
+        nd_u_u_x = u_old[1:-1, 1:-1]**2 * dt / 2. * u_xx
+        nd_v_u_y = v_bar**2 * dt / 2. * u_yy
+        nd_u_v_x = u_bar**2 * dt / 2. * v_xx
+        nd_v_v_y = v_old[1:-1, 1:-1]**2 * dt / 2. * v_yy
+        # convection
+        conv_u = u_u_x - beta * nd_u_u_x + v_u_y - beta * nd_v_u_y
+        conv_v = u_v_x - beta * nd_u_v_x + v_v_y - beta * nd_v_v_y
+
+        # diffusion
+        # laplacian
+        lap_u = u_xx + u_yy
+        lap_v = v_xx + v_yy
         # diffusion
         diff_u = k * lap_u
         diff_v = k * lap_v
 
         # intermediate velocity
-        u_hat[2:-2, 2:-2] = u_old[2:-2, 2:-2] + dt * (- conv_u + diff_u)
-        v_hat[2:-2, 2:-2] = v_old[2:-2, 2:-2] + dt * (- conv_v + diff_v)
+        u_hat[1:-1, 1:-1] = u_old[1:-1, 1:-1] + dt * (- conv_u + diff_u)
+        v_hat[1:-1, 1:-1] = v_old[1:-1, 1:-1] + dt * (- conv_v + diff_v)
 
-        # # source term for PPE (for Arakawa A-type grid)
-        # u_hat_x = (u_hat[2:-2, 3:-1] - u_hat[2:-2, 1:-3]) / (2. * dx)
-        # v_hat_y = (v_hat[3:-1, 2:-2] - v_hat[1:-3, 2:-2]) / (2. * dy)
-        # div_u_hat = u_hat_x + v_hat_y
-        # b[2:-2, 2:-2] = div_u_hat / dt
-
-        # source term for PPE (for Arakawa B-type grid)
-        # interpolate u_hat, v_hat to cell edge
-        u_hat_x = 1. / 2. * (
-            (u_hat[1:-2, 2:-1] - u_hat[1:-2, 1:-2]) / dx \
-            + (u_hat[2:-1, 2:-1] - u_hat[2:-1, 1:-2]) / dx
-        )
-        v_hat_y = 1. / 2. * (
-            (v_hat[2:-1, 1:-2] - v_hat[1:-2, 1:-2]) / dy \
-            + (v_hat[2:-1, 2:-1] - v_hat[1:-2, 2:-1]) / dy
-        )
-        div_u_hat = u_hat_x + v_hat_y   # divergence mapped to cell center
+        # source term for PPE (for Arakawa C-type grid)
+        u_hat_x = (u_hat[1:-1, 1:] - u_hat[1:-1, :-1]) / dx
+        v_hat_y = (v_hat[1:, 1:-1] - v_hat[:-1, 1:-1]) / dy
+        div_u_hat = u_hat_x + v_hat_y
         b[1:-1, 1:-1] = div_u_hat / dt
 
         # solve PPE with point Jacobi method
-        for it in range(0, it_max+1):
+        for it in range(0, args.it_max+1):
             # previous pressure
             p_old = p.copy()
-
-            # # point Jacobi method (for Arakawa A-type grid)
-            # p[2:-2, 2:-2] = 1. / (2. * (dx**2 + dy**2)) \
-            #                 * (
-            #                     - b[2:-2, 2:-2] * dx**2 * dy**2 \
-            #                     + (p_old[2:-2, 3:-1] + p_old[2:-2, 1:-3]) * dy**2 \
-            #                     + (p_old[3:-1, 2:-2] + p_old[1:-3, 2:-2]) * dx**2
-            #                 )
 
             # point Jacobi method (for Arakawa B-type grid)
             p[1:-1, 1:-1] = 1. / (2. * (dx**2 + dy**2)) \
@@ -242,68 +235,53 @@ def main(args):
                                 + (p_old[2:, 1:-1] + p_old[:-2, 1:-1]) * dx**2
                             )
 
-            # # boundary condition (for Arakawa A-type grid)
-            # p[1,  :] = p[2,  :]   # South (be careful with meshgrid)
-            # p[-2, :] = p[-3, :]   # North
-            # p[:,  1] = p[:,  2]   # West
-            # p[:, -2] = p[:, -3]   # East
-            # # p[1, int(nx/2)] = 0.   # bottom center
-            # p[1, 1] = 0.   # bottom left corner
-
             # boundary condition (for Arakawa B-type grid)
             p[0,  :] = p[1,  :]   # South (be careful with meshgrid)
             p[-1, :] = p[-2, :]   # North
             p[:,  0] = p[:,  1]   # West
             p[:, -1] = p[:, -2]   # East
+            # p[1, int(Nx / 2.)] = 0.   # bottom left corner
             p[1, 1] = 0.   # bottom left corner
 
             # converged?
             p_res = np.sqrt(np.sum((p - p_old)**2)) / np.sqrt(np.sum(p_old**2))
             if it % 1000 == 0:
                 print(f"  >>> PPE -> it: {it}, p_res: {p_res:.6e}")
-            if p_res < p_tol:
-                print("   >>> ppe converged")
+            if p_res < args.p_tol:
+                print(f"  >>> PPE converged")
                 break
 
-        # # pressure gradient (for Arakawa A-type grid)
-        # p_x = (p[2:-2, 3:-1] - p[2:-2, 1:-3]) / (2. * dx)
-        # p_y = (p[3:-1, 2:-2] - p[1:-3, 2:-2]) / (2. * dy)
-
-        # pressure gradient (for Arakawa B-type grid)
-        # interpolate p to cell edge,
-        # then apply average pressure gradient to correct velocity
-        p_x = 1. / 2. * (
-            (p[1:-2, 2:-1] - p[1:-2, 1:-2]) / dx \
-            + (p[2:-1, 2:-1] - p[2:-1, 1:-2]) / dx
-        )
-        p_y = 1. / 2. * (
-            (p[2:-1, 1:-2] - p[1:-2, 1:-2]) / dy \
-            + (p[2:-1, 2:-1] - p[1:-2, 2:-1]) / dy
-        )
+        # pressure gradient
+        # interpolate p to cell edge
+        p_x = (p[1:-1, 2:-1] - p[1:-1, 1:-2]) / dx
+        p_y = (p[2:-1, 1:-1] - p[1:-2, 1:-1]) / dy
 
         # velocity correction
-        u[2:-2, 2:-2] = u_hat[2:-2, 2:-2] - dt * p_x
-        v[2:-2, 2:-2] = v_hat[2:-2, 2:-2] - dt * p_y
+        u[1:-1, 1:-1] = u_hat[1:-1, 1:-1] - dt * p_x
+        v[1:-1, 1:-1] = v_hat[1:-1, 1:-1] - dt * p_y
 
-        # boundary condition
-        u[0,  :], v[0,  :] = 0., 0.   # South (be careful with meshgrid)
-        u[-1, :], v[-1, :] = 1., 0.   # North
-        u[:,  0], v[:,  0] = 0., 0.   # West
-        u[:, -1], v[:, -1] = 0., 0.   # East
+        # boundary condition for u
+        # u[0, :]  = - u[1, :]   # South (no slip)
+        # u[-1, :] = 2. - u[-2, :]   # North (lid driven)
+        u[:, 0]  = 0.   # West (no slip)
+        u[:, -1] = 0.   # East (no slip)
+        u[0, :]  = - u[1, :]   # South (no slip)
+        u[-1, :] = 2. - u[-2, :]   # North (lid driven)
 
-        u[1,  :], v[1,  :] = 0., 0.   # South (be careful with meshgrid)
-        u[-2, :], v[-2, :] = 1., 0.   # North
-        u[:,  1], v[:,  1] = 0., 0.   # West
-        u[:, -2], v[:, -2] = 0., 0.   # East
+        # boundary condition for v
+        v[:, 0]  = - v[:, 1]   # West (no slip)
+        v[:, -1] = - v[:, -2]   # East (no slip)
+        v[0, :]  = 0.   # South (no slip)
+        v[-1, :] = 0.   # North (no slip)
 
         # converged?
         n += 1
         t += dt
         u_res = np.sqrt(np.sum((u - u_old)**2)) / np.sqrt(np.sum(u_old**2))
         print(f"\n****************************************************************")
-        print(f">>> main -> it: {n:d}, t: {t:.3f}, dt: {dt:.3e}, u_res: {u_res:.6e}")
+        print(f">>> main -> it: {n:d}, t: {t:.3f}, dx: {dx:.3e}, dt: {dt:.3e}, u_res: {u_res:.6e}")
         print(f"****************************************************************")
-        if u_res < u_tol:
+        if u_res < args.u_tol:
             print("   >>> main converged")
             break
         if t > args.time:
@@ -311,28 +289,31 @@ def main(args):
             break
 
         if n % 1000 == 0:
+            # interpolate u, v tp cell center
+            u_itpl = 1. / 2. * (u[1:-1, 1:] + u[1:-1, :-1])
+            v_itpl = 1. / 2. * (v[1:, 1:-1] + v[:-1, 1:-1])
             plt.figure(figsize=(5, 4))
             vmin, vmax = 0., 1.+1e-6
             levels = np.linspace(vmin, vmax, 32)
             ticks = np.linspace(vmin, vmax, 5)
-            vel_norm = np.sqrt(u**2 + v**2)
-            plt.contourf(X, Y, vel_norm, cmap="turbo", levels=levels, extend="both")
+            vel_norm = np.sqrt(u_itpl**2 + v_itpl**2)
+            plt.contourf(X[:-1, :-1] + dx / 2., Y[:-1, :-1] + dy / 2., vel_norm, cmap="turbo", levels=levels, extend="both")
             plt.colorbar(ticks=ticks, extend="both", label=r"$||\mathbf{u}||$")
             plt.xlim(0., Lx)
             plt.ylim(0., Ly)
             plt.xlabel(r"$x$")
             plt.ylabel(r"$y$")
-            plt.title(f"Velocity norm ($\mathrm{{Re}}={Re}, t={t:.2f}, \mathrm{{res}}={u_res:.2e}$)")
+            plt.title(f"Velocity norm ($\mathrm{{Re}}={Re}, t={t:.2f}$)")
             plt.tight_layout()
             plt.savefig(os.path.join(dir_res, f"velocity_norm.png"), dpi=300)
             plt.savefig(os.path.join(dir_fig_velocity_norm, f"velocity_norm_n{n:d}.png"), dpi=300)
             plt.close()
 
             plt.figure(figsize=(5, 4))
-            vmin, vmax = -.5, .5+1e-6
+            vmin, vmax = 0., 1.+1e-6
             levels = np.linspace(vmin, vmax, 32)
             ticks = np.linspace(vmin, vmax, 5)
-            plt.contourf(X, Y, u, cmap="turbo", levels=levels, extend="both")
+            plt.contourf(X[:-1, :-1] + dx / 2., Y[:-1, :-1] + dy / 2., u_itpl, cmap="turbo", levels=levels, extend="both")
             plt.colorbar(ticks=ticks, extend="both", label=r"$u$")
             plt.xlim(0., Lx)
             plt.ylim(0., Ly)
@@ -348,7 +329,7 @@ def main(args):
             vmin, vmax = -.5, .5+1e-6
             levels = np.linspace(vmin, vmax, 32)
             ticks = np.linspace(vmin, vmax, 5)
-            plt.contourf(X, Y, v, cmap="turbo", levels=levels, extend="both")
+            plt.contourf(X[:-1, :-1] + dx / 2., Y[:-1, :-1] + dy / 2., v_itpl, cmap="turbo", levels=levels, extend="both")
             plt.colorbar(ticks=ticks, extend="both", label=r"$u$")
             plt.xlim(0., Lx)
             plt.ylim(0., Ly)
@@ -364,7 +345,7 @@ def main(args):
             vmin, vmax = - .025, .025
             levels = np.linspace(vmin, vmax, 32)
             ticks = np.linspace(vmin, vmax, 5)
-            plt.contourf(X[1:-2, 1:-2], Y[1:-2, 1:-2], div_u_hat, cmap="coolwarm", levels=levels, extend="both")
+            plt.contourf(X[:-1, :-1] + dx / 2., Y[:-1, :-1] + dy / 2., div_u_hat, cmap="coolwarm", levels=levels, extend="both")
             plt.colorbar(ticks=ticks, extend="both", label=r"$\nabla \cdot \mathbf{\hat{u}}$")
             plt.xlim(0., Lx)
             plt.ylim(0., Ly)
@@ -381,7 +362,7 @@ def main(args):
             levels = np.linspace(vmin, vmax, 32)
             ticks = np.linspace(vmin, vmax, 5)
             plt.streamplot(
-                X, Y, u, v, color=vel_norm, cmap="turbo"
+                X[:-1, :-1] + dx / 2., Y[:-1, :-1] + dy / 2., u_itpl, v_itpl, color=vel_norm, cmap="turbo"
             )
             plt.colorbar(ticks=ticks, extend="both", label=r"$\psi$")
             plt.xlim(0., Lx)
@@ -393,29 +374,14 @@ def main(args):
             plt.savefig(os.path.join(dir_res, f"streamline.png"), dpi=300)
             plt.close()
 
-            # # divergence & vorticity (for Arakawa A-type grid)
-            # u_x = (u[1:-1, 2:] - u[1:-1, :-2]) / (2. * dx)
-            # u_y = (u[2:, 1:-1] - u[:-2, 1:-1]) / (2. * dy)
-            # v_x = (v[1:-1, 2:] - v[1:-1, :-2]) / (2. * dx)
-            # v_y = (v[2:, 1:-1] - v[:-2, 1:-1]) / (2. * dy)
-            # div_u = u_x + v_y
-            # vor_u = v_x - u_y
-
-            # divergence & vorticity (for Arakawa B-type grid)
-            # interpolate u, v to cell edge
-            u_itpl = 1. / 2. * (u[1:, :] + u[:-1, :])   # interpolation along y-axis
-            v_itpl = 1. / 2. * (v[:, 1:] + v[:, :-1])   # interpolation along x-axis
-
-            # divergence
-            u_x = (u_itpl[:, 1:] - u_itpl[:, :-1]) / dx
-            v_y = (v_itpl[1:, :] - v_itpl[:-1, :]) / dy
-            div_u = u_x + v_y
-
             plt.figure(figsize=(5, 4))
+            u_x = (u[1:-1, 1:] - u[1:-1, :-1]) / dx
+            v_y = (v[1:, 1:-1] - v[:-1, 1:-1]) / dy
+            div_u = u_x + v_y
             vmin, vmax = - .025, .025
             levels = np.linspace(vmin, vmax, 32)
             ticks = np.linspace(vmin, vmax, 5)
-            plt.contourf(X[:-1, :-1] + dx / 2., Y[:-1, :-1] + dy / 2., div_u, cmap="coolwarm", levels=levels, extend="both")
+            plt.contourf(X[:-1, :-1], Y[:-1, :-1], div_u, cmap="coolwarm", levels=levels, extend="both")
             plt.colorbar(ticks=ticks, extend="both", label=r"$\nabla \cdot \mathbf{u}$")
             plt.xlim(0., Lx)
             plt.ylim(0., Ly)
@@ -427,16 +393,31 @@ def main(args):
             plt.savefig(os.path.join(dir_fig_divergence, f"divergence_n{n:d}.png"), dpi=300)
             plt.close()
 
-            # vorticity
-            u_y = (u[1:, :-1] - u[:-1, :-1]) / dy
-            v_x = (v[:-1, 1:] - v[:-1, :-1]) / dx
-            vor_u = v_x - u_y
+            # plot divergence of intermediate velocity u_hat
+            plt.figure(figsize=(5, 4))
+            vmin, vmax = - .025, .025
+            levels = np.linspace(vmin, vmax, 32)
+            ticks = np.linspace(vmin, vmax, 5)
+            plt.contourf(X[:-1, :-1], Y[:-1, :-1], div_u_hat, cmap="coolwarm", levels=levels, extend="both")
+            plt.colorbar(ticks=ticks, extend="both", label=r"$\nabla \cdot \mathbf{\hat{u}}$")
+            plt.xlim(0., Lx)
+            plt.ylim(0., Ly)
+            plt.xlabel(r"$x$")
+            plt.ylabel(r"$y$")
+            plt.title(f"Divergence of intermediate vel ($\mathrm{{Re}}={Re}, t={t:.2f}$)")
+            plt.tight_layout()
+            plt.savefig(os.path.join(dir_res, f"divergence_hat.png"), dpi=300)
+            plt.savefig(os.path.join(dir_fig_divergence_hat, f"divergence_hat_n{n:d}.png"), dpi=300)
+            plt.close()
 
             plt.figure(figsize=(5, 4))
+            u_y = (u[1:, :] - u[:-1, :]) / dy
+            v_x = (v[:, 1:] - v[:, :-1]) / dx
+            vor_u = v_x - u_y
             vmin, vmax = -5., 5.
             levels = np.linspace(vmin, vmax, 32)
             ticks = np.linspace(vmin, vmax, 5)
-            plt.contourf(X[:-1, :-1] + dx / 2., Y[:-1, :-1] + dy / 2., vor_u, cmap="coolwarm", levels=levels, extend="both")
+            plt.contourf(X, Y, vor_u, cmap="turbo", levels=levels, extend="both")
             plt.colorbar(ticks=ticks, extend="both", label=r"$\omega$")
             plt.xlim(0., Lx)
             plt.ylim(0., Ly)
@@ -452,7 +433,7 @@ def main(args):
             vmin, vmax = -.1, .1
             levels = np.linspace(vmin, vmax, 32)
             ticks = np.linspace(vmin, vmax, 5)
-            plt.contourf(X[:-1, :-1], Y[:-1, :-1], p - np.mean(p), cmap="turbo", levels=levels, extend="both")
+            plt.contourf(X, Y, p[:-1, :-1] - np.mean(p[:-1, :-1]), cmap="turbo", levels=levels, extend="both")
             plt.colorbar(ticks=ticks, extend="both", label=r"$p$")
             plt.xlim(0., Lx)
             plt.ylim(0., Ly)
@@ -465,10 +446,12 @@ def main(args):
             plt.close()
 
             # compare with reference solutions
+            u_itpl = 1. / 2. * (u[1:, :] + u[:-1, :])
+            v_itpl = 1. / 2. * (v[:, 1:] + v[:, :-1])
             plt.figure(figsize=(4, 4))
-            plt.scatter(df_Ghia["u"],   df_Ghia["y"],   alpha=.7, marker="1", label="Ghia et al. 1982")
-            plt.scatter(df_Erturk["u"], df_Erturk["y"], alpha=.7, marker="2", label="Erturk et al. 2005")
-            plt.plot(u[1:-1, int(Ny/2)], y[1:-1], alpha=.7, color="k", ls="--", label="Present")
+            plt.scatter(df_Ghia["u"],   df_Ghia["y"],   alpha=.7, marker="v", label="Ghia et al. 1982")
+            plt.scatter(df_Erturk["u"], df_Erturk["y"], alpha=.7, marker="^", label="Erturk et al. 2005")
+            plt.plot(u_itpl[:, int(Ny/2)], y, alpha=.7, color="k", ls="--", label="Present")
             plt.legend(loc="lower right")
             plt.xlabel(r"$u$")
             plt.ylabel(r"$y$")
@@ -479,9 +462,9 @@ def main(args):
             plt.close()
 
             plt.figure(figsize=(4, 4))
-            plt.scatter(df_Ghia["x"],   df_Ghia["v"],   alpha=.7, marker="1", label="Ghia et al. 1982")
-            plt.scatter(df_Erturk["x"], df_Erturk["v"], alpha=.7, marker="2", label="Erturk et al. 2005")
-            plt.plot(x[1:-1], v[int(Nx/2), 1:-1], alpha=.7, color="k", ls="--", label="Present")
+            plt.scatter(df_Ghia["x"],   df_Ghia["v"],   alpha=.7, marker="v", label="Ghia et al. 1982")
+            plt.scatter(df_Erturk["x"], df_Erturk["v"], alpha=.7, marker="^", label="Erturk et al. 2005")
+            plt.plot(x, v_itpl[int(Nx/2), :], alpha=.7, color="k", ls="--", label="Present")
             plt.legend(loc="upper right")
             plt.xlabel(r"$x$")
             plt.ylabel(r"$v$")
