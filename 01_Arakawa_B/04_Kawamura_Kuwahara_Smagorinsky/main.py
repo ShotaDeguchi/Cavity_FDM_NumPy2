@@ -28,7 +28,7 @@ sys.path.append(
     os.path.join(os.path.dirname(__file__), "..", "..")
 )
 from reference import *
-from solver import *
+from solvers import *
 
 ################################################################################
 
