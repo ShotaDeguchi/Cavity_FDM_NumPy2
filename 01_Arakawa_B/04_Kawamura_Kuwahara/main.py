@@ -3,7 +3,7 @@
 2D lid-driven cavity flow simulation with Finite Difference Method
 
 space:
-    convection:        Kawamura-Kuwahara (Kawamura&Kuwahara 1984, Kawamura et al. 1986)
+    convection:        Kawamura-Kuwahara (Kawamura&Kuwahara 1984)
     diffusion:         2nd order central
     pressure gradient: 2nd order central
 
@@ -85,6 +85,47 @@ def arguments():
     )
     args = parser.parse_args()
     return args
+
+################################################################################
+
+def get_convection(u, v, dx, dy, beta):
+    u_u_x = u[2:-2, 2:-2] * (- u[2:-2, 4:] + 8. * u[2:-2, 3:-1] - 8. * u[2:-2, 1:-3] + u[2:-2, :-4]) / (12. * dx) \
+            + beta * np.abs(u[2:-2, 2:-2]) * dx**3 * (u[2:-2, 4:] - 4. * u[2:-2, 3:-1] + 6. * u[2:-2, 2:-2] - 4. * u[2:-2, 1:-3] + u[2:-2, :-4]) / dx**4
+    v_u_y = v[2:-2, 2:-2] * (- u[4:, 2:-2] + 8. * u[3:-1, 2:-2] - 8. * u[1:-3, 2:-2] + u[:-4, 2:-2]) / (12. * dy) \
+            + beta * np.abs(v[2:-2, 2:-2]) * dy**3 * (u[4:, 2:-2] - 4. * u[3:-1, 2:-2] + 6. * u[2:-2, 2:-2] - 4. * u[1:-3, 2:-2] + u[:-4, 2:-2]) / dy**4
+    u_v_x = u[2:-2, 2:-2] * (- v[2:-2, 4:] + 8. * v[2:-2, 3:-1] - 8. * v[2:-2, 1:-3] + v[2:-2, :-4]) / (12. * dx) \
+            + beta * np.abs(u[2:-2, 2:-2]) * dx**3 * (v[2:-2, 4:] - 4. * v[2:-2, 3:-1] + 6. * v[2:-2, 2:-2] - 4. * v[2:-2, 1:-3] + v[2:-2, :-4]) / dx**4
+    v_v_y = v[2:-2, 2:-2] * (- v[4:, 2:-2] + 8. * v[3:-1, 2:-2] - 8. * v[1:-3, 2:-2] + v[:-4, 2:-2]) / (12. * dy) \
+            + beta * np.abs(v[2:-2, 2:-2]) * dy**3 * (v[4:, 2:-2] - 4. * v[3:-1, 2:-2] + 6. * v[2:-2, 2:-2] - 4. * v[1:-3, 2:-2] + v[:-4, 2:-2]) / dy**4
+    conv_u = u_u_x + v_u_y
+    conv_v = u_v_x + v_v_y
+    return conv_u, conv_v
+
+def get_diffusion(u, v, dx, dy, k):
+    u_xx = (u[2:-2, 3:-1] - 2. * u[2:-2, 2:-2] + u[2:-2, 1:-3]) / dx**2
+    u_yy = (u[3:-1, 2:-2] - 2. * u[2:-2, 2:-2] + u[1:-3, 2:-2]) / dy**2
+    v_xx = (v[2:-2, 3:-1] - 2. * v[2:-2, 2:-2] + v[2:-2, 1:-3]) / dx**2
+    v_yy = (v[3:-1, 2:-2] - 2. * v[2:-2, 2:-2] + v[1:-3, 2:-2]) / dy**2
+    lap_u = u_xx + u_yy
+    lap_v = v_xx + v_yy
+    diff_u = k * lap_u
+    diff_v = k * lap_v
+    return diff_u, diff_v
+
+def get_source(u, v, dx, dy, dt, b):
+    # source term for PPE (for Arakawa B-type grid)
+    # interpolate u_hat, v_hat to cell edge
+    u_x = 1. / 2. * (
+        (u[1:-2, 2:-1] - u[1:-2, 1:-2]) / dx \
+        + (u[2:-1, 2:-1] - u[2:-1, 1:-2]) / dx
+    )
+    v_y = 1. / 2. * (
+        (v[2:-1, 1:-2] - v[1:-2, 1:-2]) / dy \
+        + (v[2:-1, 2:-1] - v[1:-2, 2:-1]) / dy
+    )
+    div_u = u_x + v_y   # divergence mapped to cell center
+    b[1:-1, 1:-1] = div_u / dt
+    return b, div_u
 
 ################################################################################
 
@@ -175,28 +216,34 @@ def main(args):
         v_hat = v.copy()
 
         # convection
-        u_u_x = u_old[2:-2, 2:-2] * (- u_old[2:-2, 4:] + 8. * u_old[2:-2, 3:-1] - 8. * u_old[2:-2, 1:-3] + u_old[2:-2, :-4]) / (12. * dx) \
-                + beta * np.abs(u_old[2:-2, 2:-2]) * dx**3 * (u_old[2:-2, 4:] - 4. * u_old[2:-2, 3:-1] + 6. * u_old[2:-2, 2:-2] - 4. * u_old[2:-2, 1:-3] + u_old[2:-2, :-4]) / dx**4
-        v_u_y = v_old[2:-2, 2:-2] * (- u_old[4:, 2:-2] + 8. * u_old[3:-1, 2:-2] - 8. * u_old[1:-3, 2:-2] + u_old[:-4, 2:-2]) / (12. * dy) \
-                + beta * np.abs(v_old[2:-2, 2:-2]) * dy**3 * (u_old[4:, 2:-2] - 4. * u_old[3:-1, 2:-2] + 6. * u_old[2:-2, 2:-2] - 4. * u_old[1:-3, 2:-2] + u_old[:-4, 2:-2]) / dy**4
-        u_v_x = u_old[2:-2, 2:-2] * (- v_old[2:-2, 4:] + 8. * v_old[2:-2, 3:-1] - 8. * v_old[2:-2, 1:-3] + v_old[2:-2, :-4]) / (12. * dx) \
-                + beta * np.abs(u_old[2:-2, 2:-2]) * dx**3 * (v_old[2:-2, 4:] - 4. * v_old[2:-2, 3:-1] + 6. * v_old[2:-2, 2:-2] - 4. * v_old[2:-2, 1:-3] + v_old[2:-2, :-4]) / dx**4
-        v_v_y = v_old[2:-2, 2:-2] * (- v_old[4:, 2:-2] + 8. * v_old[3:-1, 2:-2] - 8. * v_old[1:-3, 2:-2] + v_old[:-4, 2:-2]) / (12. * dy) \
-                + beta * np.abs(v_old[2:-2, 2:-2]) * dy**3 * (v_old[4:, 2:-2] - 4. * v_old[3:-1, 2:-2] + 6. * v_old[2:-2, 2:-2] - 4. * v_old[1:-3, 2:-2] + v_old[:-4, 2:-2]) / dy**4
-        conv_u = u_u_x + v_u_y
-        conv_v = u_v_x + v_v_y
+        # u_u_x = u_old[2:-2, 2:-2] * (- u_old[2:-2, 4:] + 8. * u_old[2:-2, 3:-1] - 8. * u_old[2:-2, 1:-3] + u_old[2:-2, :-4]) / (12. * dx) \
+        #         + beta * np.abs(u_old[2:-2, 2:-2]) * dx**3 * (u_old[2:-2, 4:] - 4. * u_old[2:-2, 3:-1] + 6. * u_old[2:-2, 2:-2] - 4. * u_old[2:-2, 1:-3] + u_old[2:-2, :-4]) / dx**4
+        # v_u_y = v_old[2:-2, 2:-2] * (- u_old[4:, 2:-2] + 8. * u_old[3:-1, 2:-2] - 8. * u_old[1:-3, 2:-2] + u_old[:-4, 2:-2]) / (12. * dy) \
+        #         + beta * np.abs(v_old[2:-2, 2:-2]) * dy**3 * (u_old[4:, 2:-2] - 4. * u_old[3:-1, 2:-2] + 6. * u_old[2:-2, 2:-2] - 4. * u_old[1:-3, 2:-2] + u_old[:-4, 2:-2]) / dy**4
+        # u_v_x = u_old[2:-2, 2:-2] * (- v_old[2:-2, 4:] + 8. * v_old[2:-2, 3:-1] - 8. * v_old[2:-2, 1:-3] + v_old[2:-2, :-4]) / (12. * dx) \
+        #         + beta * np.abs(u_old[2:-2, 2:-2]) * dx**3 * (v_old[2:-2, 4:] - 4. * v_old[2:-2, 3:-1] + 6. * v_old[2:-2, 2:-2] - 4. * v_old[2:-2, 1:-3] + v_old[2:-2, :-4]) / dx**4
+        # v_v_y = v_old[2:-2, 2:-2] * (- v_old[4:, 2:-2] + 8. * v_old[3:-1, 2:-2] - 8. * v_old[1:-3, 2:-2] + v_old[:-4, 2:-2]) / (12. * dy) \
+        #         + beta * np.abs(v_old[2:-2, 2:-2]) * dy**3 * (v_old[4:, 2:-2] - 4. * v_old[3:-1, 2:-2] + 6. * v_old[2:-2, 2:-2] - 4. * v_old[1:-3, 2:-2] + v_old[:-4, 2:-2]) / dy**4
+        # conv_u = u_u_x + v_u_y
+        # conv_v = u_v_x + v_v_y
+
+        # convection
+        conv_u, conv_v = get_convection(u_old, v_old, dx, dy, beta)
 
         # 2nd order derivatives
-        u_xx = (u_old[2:-2, 3:-1] - 2. * u_old[2:-2, 2:-2] + u_old[2:-2, 1:-3]) / dx**2
-        u_yy = (u_old[3:-1, 2:-2] - 2. * u_old[2:-2, 2:-2] + u_old[1:-3, 2:-2]) / dy**2
-        v_xx = (v_old[2:-2, 3:-1] - 2. * v_old[2:-2, 2:-2] + v_old[2:-2, 1:-3]) / dx**2
-        v_yy = (v_old[3:-1, 2:-2] - 2. * v_old[2:-2, 2:-2] + v_old[1:-3, 2:-2]) / dy**2
-        lap_u = u_xx + u_yy   # Laplacian
-        lap_v = v_xx + v_yy
+        # # u_xx = (u_old[2:-2, 3:-1] - 2. * u_old[2:-2, 2:-2] + u_old[2:-2, 1:-3]) / dx**2
+        # # u_yy = (u_old[3:-1, 2:-2] - 2. * u_old[2:-2, 2:-2] + u_old[1:-3, 2:-2]) / dy**2
+        # # v_xx = (v_old[2:-2, 3:-1] - 2. * v_old[2:-2, 2:-2] + v_old[2:-2, 1:-3]) / dx**2
+        # # v_yy = (v_old[3:-1, 2:-2] - 2. * v_old[2:-2, 2:-2] + v_old[1:-3, 2:-2]) / dy**2
+        # # lap_u = u_xx + u_yy   # Laplacian
+        # # lap_v = v_xx + v_yy
+
+        # # diffusion
+        # diff_u = k * lap_u
+        # diff_v = k * lap_v
 
         # diffusion
-        diff_u = k * lap_u
-        diff_v = k * lap_v
+        diff_u, diff_v = get_diffusion(u_old, v_old, dx, dy, k)
 
         # intermediate velocity
         u_hat[2:-2, 2:-2] = u_old[2:-2, 2:-2] + dt * (- conv_u + diff_u)
@@ -208,18 +255,20 @@ def main(args):
         # div_u_hat = u_hat_x + v_hat_y
         # b[2:-2, 2:-2] = div_u_hat / dt
 
-        # source term for PPE (for Arakawa B-type grid)
-        # interpolate u_hat, v_hat to cell edge
-        u_hat_x = 1. / 2. * (
-            (u_hat[1:-2, 2:-1] - u_hat[1:-2, 1:-2]) / dx \
-            + (u_hat[2:-1, 2:-1] - u_hat[2:-1, 1:-2]) / dx
-        )
-        v_hat_y = 1. / 2. * (
-            (v_hat[2:-1, 1:-2] - v_hat[1:-2, 1:-2]) / dy \
-            + (v_hat[2:-1, 2:-1] - v_hat[1:-2, 2:-1]) / dy
-        )
-        div_u_hat = u_hat_x + v_hat_y   # divergence mapped to cell center
-        b[1:-1, 1:-1] = div_u_hat / dt
+        # # source term for PPE (for Arakawa B-type grid)
+        # # interpolate u_hat, v_hat to cell edge
+        # u_hat_x = 1. / 2. * (
+        #     (u_hat[1:-2, 2:-1] - u_hat[1:-2, 1:-2]) / dx \
+        #     + (u_hat[2:-1, 2:-1] - u_hat[2:-1, 1:-2]) / dx
+        # )
+        # v_hat_y = 1. / 2. * (
+        #     (v_hat[2:-1, 1:-2] - v_hat[1:-2, 1:-2]) / dy \
+        #     + (v_hat[2:-1, 2:-1] - v_hat[1:-2, 2:-1]) / dy
+        # )
+        # div_u_hat = u_hat_x + v_hat_y   # divergence mapped to cell center
+        # b[1:-1, 1:-1] = div_u_hat / dt
+
+        b, div_u_hat = get_source(u_hat, v_hat, dx, dy, dt, b)
 
         # solve PPE with point Jacobi method
         for it in range(0, it_max+1):
@@ -255,7 +304,9 @@ def main(args):
             p[-1, :] = p[-2, :]   # North
             p[:,  0] = p[:,  1]   # West
             p[:, -1] = p[:, -2]   # East
-            p[1, 1] = 0.   # bottom left corner
+            p[0, int(Nx / 2)] = 0.   # bottom center
+            # p[1, int(Nx / 2)] = 0.   # bottom center
+            # p[1, 1] = 0.   # bottom left corner
 
             # converged?
             p_res = np.sqrt(np.sum((p - p_old)**2)) / np.sqrt(np.sum(p_old**2))
