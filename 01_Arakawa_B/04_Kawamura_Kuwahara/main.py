@@ -127,6 +127,50 @@ def get_source(u, v, dx, dy, dt, b):
     b[1:-1, 1:-1] = div_u / dt
     return b, div_u
 
+def Jacobi(p, b, dx, dy, nx, ny, it_max, tol):
+    for it in range(0, it_max+1):
+        # previous pressure
+        p_old = p.copy()
+
+        # point Jacobi method (for Arakawa B-type grid)
+        p[1:-1, 1:-1] = 1. / (2. * (dx**2 + dy**2)) \
+                        * (
+                            - b[1:-1, 1:-1] * dx**2 * dy**2 \
+                            + (p_old[1:-1, 2:] + p_old[1:-1, :-2]) * dy**2 \
+                            + (p_old[2:, 1:-1] + p_old[:-2, 1:-1]) * dx**2
+                        )
+
+        # boundary condition (for Arakawa B-type grid)
+        p[0,  :] = p[1,  :]   # South (be careful with meshgrid)
+        p[-1, :] = p[-2, :]   # North
+        p[:,  0] = p[:,  1]   # West
+        p[:, -1] = p[:, -2]   # East
+        p[0, int(nx / 2)] = 0.   # bottom center
+        # p[1, int(Nx / 2)] = 0.   # bottom center
+        # p[1, 1] = 0.   # bottom left corner
+
+        # converged?
+        p_res = np.sqrt(np.sum((p - p_old)**2)) / np.sqrt(np.sum(p_old**2))
+        if it % 1000 == 0:
+            print(f"   >>> PPE -> it: {it}, p_res: {p_res:.6e}")
+        if p_res < tol:
+            print(f"   >>> PPE converged")
+            break
+    return p
+
+def get_pressure_gradient(p, dx, dy):
+    # interpolate p to cell edge,
+    # then apply average pressure gradient to correct velocity
+    p_x = 1. / 2. * (
+        (p[1:-2, 2:-1] - p[1:-2, 1:-2]) / dx \
+        + (p[2:-1, 2:-1] - p[2:-1, 1:-2]) / dx
+    )
+    p_y = 1. / 2. * (
+        (p[2:-1, 1:-2] - p[1:-2, 1:-2]) / dy \
+        + (p[2:-1, 2:-1] - p[1:-2, 2:-1]) / dy
+    )
+    return p_x, p_y
+
 ################################################################################
 
 def main(args):
@@ -216,31 +260,7 @@ def main(args):
         v_hat = v.copy()
 
         # convection
-        # u_u_x = u_old[2:-2, 2:-2] * (- u_old[2:-2, 4:] + 8. * u_old[2:-2, 3:-1] - 8. * u_old[2:-2, 1:-3] + u_old[2:-2, :-4]) / (12. * dx) \
-        #         + beta * np.abs(u_old[2:-2, 2:-2]) * dx**3 * (u_old[2:-2, 4:] - 4. * u_old[2:-2, 3:-1] + 6. * u_old[2:-2, 2:-2] - 4. * u_old[2:-2, 1:-3] + u_old[2:-2, :-4]) / dx**4
-        # v_u_y = v_old[2:-2, 2:-2] * (- u_old[4:, 2:-2] + 8. * u_old[3:-1, 2:-2] - 8. * u_old[1:-3, 2:-2] + u_old[:-4, 2:-2]) / (12. * dy) \
-        #         + beta * np.abs(v_old[2:-2, 2:-2]) * dy**3 * (u_old[4:, 2:-2] - 4. * u_old[3:-1, 2:-2] + 6. * u_old[2:-2, 2:-2] - 4. * u_old[1:-3, 2:-2] + u_old[:-4, 2:-2]) / dy**4
-        # u_v_x = u_old[2:-2, 2:-2] * (- v_old[2:-2, 4:] + 8. * v_old[2:-2, 3:-1] - 8. * v_old[2:-2, 1:-3] + v_old[2:-2, :-4]) / (12. * dx) \
-        #         + beta * np.abs(u_old[2:-2, 2:-2]) * dx**3 * (v_old[2:-2, 4:] - 4. * v_old[2:-2, 3:-1] + 6. * v_old[2:-2, 2:-2] - 4. * v_old[2:-2, 1:-3] + v_old[2:-2, :-4]) / dx**4
-        # v_v_y = v_old[2:-2, 2:-2] * (- v_old[4:, 2:-2] + 8. * v_old[3:-1, 2:-2] - 8. * v_old[1:-3, 2:-2] + v_old[:-4, 2:-2]) / (12. * dy) \
-        #         + beta * np.abs(v_old[2:-2, 2:-2]) * dy**3 * (v_old[4:, 2:-2] - 4. * v_old[3:-1, 2:-2] + 6. * v_old[2:-2, 2:-2] - 4. * v_old[1:-3, 2:-2] + v_old[:-4, 2:-2]) / dy**4
-        # conv_u = u_u_x + v_u_y
-        # conv_v = u_v_x + v_v_y
-
-        # convection
         conv_u, conv_v = get_convection(u_old, v_old, dx, dy, beta)
-
-        # 2nd order derivatives
-        # # u_xx = (u_old[2:-2, 3:-1] - 2. * u_old[2:-2, 2:-2] + u_old[2:-2, 1:-3]) / dx**2
-        # # u_yy = (u_old[3:-1, 2:-2] - 2. * u_old[2:-2, 2:-2] + u_old[1:-3, 2:-2]) / dy**2
-        # # v_xx = (v_old[2:-2, 3:-1] - 2. * v_old[2:-2, 2:-2] + v_old[2:-2, 1:-3]) / dx**2
-        # # v_yy = (v_old[3:-1, 2:-2] - 2. * v_old[2:-2, 2:-2] + v_old[1:-3, 2:-2]) / dy**2
-        # # lap_u = u_xx + u_yy   # Laplacian
-        # # lap_v = v_xx + v_yy
-
-        # # diffusion
-        # diff_u = k * lap_u
-        # diff_v = k * lap_v
 
         # diffusion
         diff_u, diff_v = get_diffusion(u_old, v_old, dx, dy, k)
@@ -249,92 +269,18 @@ def main(args):
         u_hat[2:-2, 2:-2] = u_old[2:-2, 2:-2] + dt * (- conv_u + diff_u)
         v_hat[2:-2, 2:-2] = v_old[2:-2, 2:-2] + dt * (- conv_v + diff_v)
 
-        # # source term for PPE (for Arakawa A-type grid)
-        # u_hat_x = (u_hat[2:-2, 3:-1] - u_hat[2:-2, 1:-3]) / (2. * dx)
-        # v_hat_y = (v_hat[3:-1, 2:-2] - v_hat[1:-3, 2:-2]) / (2. * dy)
-        # div_u_hat = u_hat_x + v_hat_y
-        # b[2:-2, 2:-2] = div_u_hat / dt
-
-        # # source term for PPE (for Arakawa B-type grid)
-        # # interpolate u_hat, v_hat to cell edge
-        # u_hat_x = 1. / 2. * (
-        #     (u_hat[1:-2, 2:-1] - u_hat[1:-2, 1:-2]) / dx \
-        #     + (u_hat[2:-1, 2:-1] - u_hat[2:-1, 1:-2]) / dx
-        # )
-        # v_hat_y = 1. / 2. * (
-        #     (v_hat[2:-1, 1:-2] - v_hat[1:-2, 1:-2]) / dy \
-        #     + (v_hat[2:-1, 2:-1] - v_hat[1:-2, 2:-1]) / dy
-        # )
-        # div_u_hat = u_hat_x + v_hat_y   # divergence mapped to cell center
-        # b[1:-1, 1:-1] = div_u_hat / dt
-
+        # source term for PPE (for Arakawa B-type grid)
         b, div_u_hat = get_source(u_hat, v_hat, dx, dy, dt, b)
 
-        # solve PPE with point Jacobi method
-        for it in range(0, it_max+1):
-            # previous pressure
-            p_old = p.copy()
-
-            # # point Jacobi method (for Arakawa A-type grid)
-            # p[2:-2, 2:-2] = 1. / (2. * (dx**2 + dy**2)) \
-            #                 * (
-            #                     - b[2:-2, 2:-2] * dx**2 * dy**2 \
-            #                     + (p_old[2:-2, 3:-1] + p_old[2:-2, 1:-3]) * dy**2 \
-            #                     + (p_old[3:-1, 2:-2] + p_old[1:-3, 2:-2]) * dx**2
-            #                 )
-
-            # point Jacobi method (for Arakawa B-type grid)
-            p[1:-1, 1:-1] = 1. / (2. * (dx**2 + dy**2)) \
-                            * (
-                                - b[1:-1, 1:-1] * dx**2 * dy**2 \
-                                + (p_old[1:-1, 2:] + p_old[1:-1, :-2]) * dy**2 \
-                                + (p_old[2:, 1:-1] + p_old[:-2, 1:-1]) * dx**2
-                            )
-
-            # # boundary condition (for Arakawa A-type grid)
-            # p[1,  :] = p[2,  :]   # South (be careful with meshgrid)
-            # p[-2, :] = p[-3, :]   # North
-            # p[:,  1] = p[:,  2]   # West
-            # p[:, -2] = p[:, -3]   # East
-            # # p[1, int(nx/2)] = 0.   # bottom center
-            # p[1, 1] = 0.   # bottom left corner
-
-            # boundary condition (for Arakawa B-type grid)
-            p[0,  :] = p[1,  :]   # South (be careful with meshgrid)
-            p[-1, :] = p[-2, :]   # North
-            p[:,  0] = p[:,  1]   # West
-            p[:, -1] = p[:, -2]   # East
-            p[0, int(Nx / 2)] = 0.   # bottom center
-            # p[1, int(Nx / 2)] = 0.   # bottom center
-            # p[1, 1] = 0.   # bottom left corner
-
-            # converged?
-            p_res = np.sqrt(np.sum((p - p_old)**2)) / np.sqrt(np.sum(p_old**2))
-            if it % 1000 == 0:
-                print(f"  >>> PPE -> it: {it}, p_res: {p_res:.6e}")
-            if p_res < p_tol:
-                print("   >>> ppe converged")
-                break
-
-        # # pressure gradient (for Arakawa A-type grid)
-        # p_x = (p[2:-2, 3:-1] - p[2:-2, 1:-3]) / (2. * dx)
-        # p_y = (p[3:-1, 2:-2] - p[1:-3, 2:-2]) / (2. * dy)
+        # solve PPE
+        p = Jacobi(p, b, dx, dy, Nx, Ny, it_max, p_tol)
 
         # pressure gradient (for Arakawa B-type grid)
-        # interpolate p to cell edge,
-        # then apply average pressure gradient to correct velocity
-        p_x = 1. / 2. * (
-            (p[1:-2, 2:-1] - p[1:-2, 1:-2]) / dx \
-            + (p[2:-1, 2:-1] - p[2:-1, 1:-2]) / dx
-        )
-        p_y = 1. / 2. * (
-            (p[2:-1, 1:-2] - p[1:-2, 1:-2]) / dy \
-            + (p[2:-1, 2:-1] - p[1:-2, 2:-1]) / dy
-        )
+        p_x, p_y = get_pressure_gradient(p, dx, dy)
 
         # velocity correction
-        u[2:-2, 2:-2] = u_hat[2:-2, 2:-2] - dt * p_x
-        v[2:-2, 2:-2] = v_hat[2:-2, 2:-2] - dt * p_y
+        u[2:-2, 2:-2] = u_hat[2:-2, 2:-2] + dt * (- p_x)
+        v[2:-2, 2:-2] = v_hat[2:-2, 2:-2] + dt * (- p_y)
 
         # boundary condition
         u[0,  :], v[0,  :] = 0., 0.   # South (be careful with meshgrid)
