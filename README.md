@@ -29,20 +29,6 @@ The governing equations are the incompressible Navier-Stokes equations (dimensio
 ```
 where $\mathbf{u}$ is the velocity, $p$ is the pressure, and $\mathrm{Re}$ is the Reynolds number (ratio of inertia vs viscosity), respectively (external source is removed). 
 
-We denote the characteristic length as $L$ and the characteristic velocity as $U$, and the Kolmogorov length scale $\eta$ is given as:
-```math
-\eta \sim \mathcal{O} \left[ \frac{\nu^{3/4}}{\epsilon^{1/4}} \right]
-```
-where $\nu$ is the kinematic viscosity, and $\epsilon$ is the dissipation rate of turbulence kinetic energy. We can interpret $\eta$ as energy dissipation scale. Meanwhile, energy supply scale is given by:
-```math
-L \sim \mathcal{O} \left[ \frac{U^{3}}{\epsilon} \right]
-```
-and therefore,
-```math
-\frac{L}{\eta} \sim \mathcal{O} \left[ \mathrm{Re}^{3/4} \right]
-```
-If $\mathrm{Re} = 1,000$, $L / \eta \approx 180$, i.e. roughly speaking, $180$ grid points are needed along one axis (or $\Delta x \approx 1 / 180 \approx 5.5 \times 10^{-3}$). The number of grid points required grows rapidly as the spatial dimensions increase. 
-
 ### Discretization - temporal direction
 We employ Chorin's projection method (Chorin1968), i.e. split 1 timestep into *prediction* and *correction* steps:
 ```math
@@ -78,6 +64,21 @@ Using the relation of $c = \left( c + |c| \right) / 2 + \left( c - |c| \right) /
   c \frac{- \phi_{i+2} + 8 \phi_{i+1} - 8 \phi_{i-1} + \phi_{i-2}}{12 \Delta x} - \beta |c| \left( \Delta x \right)^3 \frac{\phi_{i+2} - 4 \phi_{i+1} + 6 \phi_{i} - 4 \phi_{i-1} + \phi_{i-2}}{\left( \Delta x \right)^4}
 ```
 where $\beta$ controls the intensity of the numerical diffusion, and is chosen as $\beta = 1 / 4$ in Kuwahara-Kawamura scheme. 
+
+### Dimensional analysis
+We denote the characteristic length as $L$ and the characteristic velocity as $U$, and the Kolmogorov length scale $\eta$ is given as:
+```math
+\eta \sim \mathcal{O} \left[ \frac{\nu^{3/4}}{\epsilon^{1/4}} \right]
+```
+where $\nu$ is the kinematic viscosity, and $\epsilon$ is the dissipation rate of turbulence kinetic energy. We can interpret $\eta$ as energy dissipation scale. Meanwhile, energy supply scale is given by:
+```math
+L \sim \mathcal{O} \left[ \frac{U^{3}}{\epsilon} \right]
+```
+and therefore,
+```math
+\frac{L}{\eta} \sim \mathcal{O} \left[ \mathrm{Re}^{3/4} \right]
+```
+If $\mathrm{Re} = 1,000$, $L / \eta \approx 180$, i.e. roughly speaking, $180$ grid points are needed along one axis (or $\Delta x \approx 1 / 180 \approx 5.5 \times 10^{-3}$). The number of grid points required grows rapidly as the spatial dimensions increase. In the following section, the Reynolds number is chosen as $\mathrm{Re} = 1,000$ and we choose $\Delta x = 5 \times 10^{-3}$ to (almost) fully resolve the eddies and avoid introducing the large eddy models. 
 
 ## Results
 Cavity flow is a steady state problem. We assume that the field has reached its steady state when the following condition is satisfied:
