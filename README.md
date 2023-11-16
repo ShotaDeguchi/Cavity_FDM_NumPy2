@@ -11,10 +11,11 @@ See `01_Arakawa_B/04_Kawamura_Kuwahara/main.py` for the clean implementation.
 ## Results
 Cavity flow is a steady state problem. Consider that the field has reached its steady state when the following condition is satisfied:
 ```math
-\max \left( \frac{\| u^{(n+1)} - u^{(n)} \|_2}{\| u^{(n)} \|_2}, \frac{\| v^{(n+1)} - v^{(n)} \|_2}{\| v^{(n)} \|_2} \right) \le \delta
+\frac{\| u^{(n+1)} - u^{(n)} \|_2}{\| u^{(n)} \|_2} \le \delta
 ```
 where $\delta$ is the convergence tolerance, set to $\delta = 10^{-8}$. 
 
+Following quantities are presented:
 | Column name | Description | 
 | :---: | :--- |
 | vel | velocity norm |
@@ -27,13 +28,13 @@ where $\delta$ is the convergence tolerance, set to $\delta = 10^{-8}$.
 ### Same grid (Arakawa-B), different schemes
 To illustrate the difference due to spatial schemes for convection (2nd order central difference is used for pressure gradient and diffusion), we first present the results obtained with different schemes using the same grid system (here Arakawa-B). The Reynolds number is set to 1,000. 
 
-| Convection | vel | prs | div | vor | u | v |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| 1st order upwind | ![img](01_Arakawa_B/00_1st_order_upwind/Re1000/velocity_norm.png) | ![img](01_Arakawa_B/00_1st_order_upwind/Re1000/pressure.png) | ![img](01_Arakawa_B/00_1st_order_upwind/Re1000/divergence.png) | ![img](01_Arakawa_B/00_1st_order_upwind/Re1000/vorticity.png) | ![img](01_Arakawa_B/00_1st_order_upwind/Re1000/u.png) | ![img](01_Arakawa_B/00_1st_order_upwind/Re1000/v.png) |
-| Lax-Wendroff | ![img](01_Arakawa_B/01_Lax_Wendroff/Re1000/velocity_norm.png) | ![img](01_Arakawa_B/01_Lax_Wendroff/Re1000/pressure.png) | ![img](01_Arakawa_B/01_Lax_Wendroff/Re1000/divergence.png) | ![img](01_Arakawa_B/01_Lax_Wendroff/Re1000/vorticity.png) | ![img](01_Arakawa_B/01_Lax_Wendroff/Re1000/u.png) | ![img](01_Arakawa_B/01_Lax_Wendroff/Re1000/v.png) |
+| Convection | vel | prs | vor | u | v |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| 1st order upwind | ![img](01_Arakawa_B/00_1st_order_upwind/Re1000/velocity_norm.png) | ![img](01_Arakawa_B/00_1st_order_upwind/Re1000/pressure.png) | ![img](01_Arakawa_B/00_1st_order_upwind/Re1000/vorticity.png) | ![img](01_Arakawa_B/00_1st_order_upwind/Re1000/u.png) | ![img](01_Arakawa_B/00_1st_order_upwind/Re1000/v.png) |
+| Lax-Wendroff | ![img](01_Arakawa_B/01_Lax_Wendroff/Re1000/velocity_norm.png) | ![img](01_Arakawa_B/01_Lax_Wendroff/Re1000/pressure.png) | ![img](01_Arakawa_B/01_Lax_Wendroff/Re1000/vorticity.png) | ![img](01_Arakawa_B/01_Lax_Wendroff/Re1000/u.png) | ![img](01_Arakawa_B/01_Lax_Wendroff/Re1000/v.png) |
 | QUICK |  |  |
 | QUICKEST |  |  |
-| Kawamura-Kuwahara | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/velocity_norm.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/pressure.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/divergence.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/vorticity.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/u.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/v.png) |
+| Kawamura-Kuwahara | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/velocity_norm.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/pressure.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/vorticity.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/u.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/v.png) |
 
 ### Same scheme (Kawamura-Kuwahara), different grid
 Next, to realize the difference due to the choice of grid system, we now present the results by difference grid while using the same spatial schemes (Kawamura-Kuwahara for convection, central difference for pressure gradient and diffusion). The Reynolds number is set to 1,000. 
