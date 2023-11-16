@@ -65,6 +65,18 @@ Using the relation of $c = \left( c + |c| \right) / 2 + \left( c - |c| \right) /
 ```
 where $\beta$ controls the intensity of the numerical diffusion, and is chosen as $\beta = 1 / 4$ in Kuwahara-Kawamura scheme. 
 
+For pressure gradient and diffusion, we simply applied the 2nd order central difference scheme. 
+
+Gradient:
+```math
+  \frac{\partial \phi}{\partial x} \approx \frac{\phi_{i+1} - \phi_{i-1}}{2 \Delta x}
+```
+
+Diffusion:
+```math
+  \frac{\partial^2 \phi}{\partial x^2} \approx \frac{\phi_{i+1} - 2 \phi_{i} + \phi_{i-1}}{\Delta x^2}
+```
+
 ### Dimensional analysis
 We denote the characteristic length as $L$ and the characteristic velocity as $U$, and the Kolmogorov length scale $\eta$ is given as:
 ```math
