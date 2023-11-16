@@ -80,21 +80,23 @@ Using the relation of $c = \left( c + |c| \right) / 2 + \left( c - |c| \right) /
 where $\beta$ controls the intensity of the numerical diffusion, and is chosen as $\beta = 1 / 4$ in Kuwahara-Kawamura scheme. 
 
 ## Results
-Cavity flow is a steady state problem. Consider that the field has reached its steady state when the following condition is satisfied:
+Cavity flow is a steady state problem. We assume that the field has reached its steady state when the following condition is satisfied:
 ```math
-\frac{\| u^{(n+1)} - u^{(n)} \|_2}{\| u^{(n)} \|_2} \le \delta
+\left( \frac{\sum_{i, j} | u^{(n+1)}_{i,j} - u^{(n)}_{i,j} |^2}{\sum_{i, j} | u^{(n)}_{i,j} |^2} \right)^{1/2} \le \delta
 ```
 where $\delta$ is the convergence tolerance, set to $\delta = 10^{-8}$. 
 
 Following quantities are presented:
 | Column name | Description | 
 | :---: | :--- |
-| vel | velocity norm |
-| prs | pressure (shifted so its mean value is zero) |
-| div | velocity divergence (ideally, zero everywhere) |
-| vor | vorticity |
+| vel | Velocity norm |
+| prs | Pressure (shifted so its mean value is zero) |
+| div | Velocity divergence (ideally, zero everywhere) |
+| vor | Vorticity |
 | u | Horizontal velocity along the geometric center |
 | v | Vertical velocity along the geometric center |
+
+*Horizontal / vertical velocity along the geometric center is compared against compared with [Ghia+1982](https://doi.org/10.1016/0021-9991(82)90058-4) and [Erturk+2005](https://doi.org/10.1002/fld.953).*
 
 ### Comparison of different convection schemes (using the same grid system)
 To illustrate the difference due to spatial schemes for convection (2nd order central difference is used for pressure gradient and diffusion), we first present the results obtained with different schemes using the same grid system (here Arakawa-B). The Reynolds number is set to $\mathrm{Re} = 1,000$ and the spatial resolution is $\Delta x = 5 \times 10^{-3}$. 
