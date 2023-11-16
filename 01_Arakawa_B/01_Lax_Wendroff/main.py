@@ -381,8 +381,8 @@ def main():
 
             # compare with reference solutions
             plt.figure(figsize=(4, 4))
-            plt.scatter(df_Ghia["u"],   df_Ghia["y"],   alpha=.7, marker="+", label="Ghia et al. 1982")
-            plt.scatter(df_Erturk["u"], df_Erturk["y"], alpha=.7, marker="x", label="Erturk et al. 2005")
+            plt.scatter(df_Ghia["u"],   df_Ghia["y"],   alpha=.7, marker="1", label="Ghia et al. 1982")
+            plt.scatter(df_Erturk["u"], df_Erturk["y"], alpha=.7, marker="2", label="Erturk et al. 2005")
             plt.plot(u[:, int(Ny/2)], y, alpha=.7, color="k", ls="--", label="Present")
             plt.legend(loc="lower right")
             plt.xlabel(r"$u$")
@@ -394,8 +394,8 @@ def main():
             plt.close()
 
             plt.figure(figsize=(4, 4))
-            plt.scatter(df_Ghia["x"],   df_Ghia["v"],   alpha=.7, marker="+", label="Ghia et al. 1982")
-            plt.scatter(df_Erturk["x"], df_Erturk["v"], alpha=.7, marker="x", label="Erturk et al. 2005")
+            plt.scatter(df_Ghia["x"],   df_Ghia["v"],   alpha=.7, marker="1", label="Ghia et al. 1982")
+            plt.scatter(df_Erturk["x"], df_Erturk["v"], alpha=.7, marker="2", label="Erturk et al. 2005")
             plt.plot(x, v[int(Nx/2), :], alpha=.7, color="k", ls="--", label="Present")
             plt.legend(loc="upper right")
             plt.xlabel(r"$x$")
