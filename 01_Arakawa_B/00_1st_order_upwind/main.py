@@ -29,76 +29,33 @@ sys.path.append(
 )
 from reference import *
 
-################################################################################
 
-def arguments():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-d",
-        "--dx",
-        type=float,
-        default=5e-3,
-        help="grid spacing"
-    )
-    parser.add_argument(
-        "-r",
-        "--Re",
-        type=float,
-        default=1000.,
-        help="Reynolds number"
-    )
-    parser.add_argument(
-        "-s",
-        "--solver",
-        type=str,
-        default="Jacobi",
-        help="solver for pressure Poisson equation"
-    )
-    parser.add_argument(
-        "-t",
-        "--time",
-        type=float,
-        default=200.,
-        help="maximum simulation time"
-    )
-    parser.add_argument(
-        "-u",
-        "--u_tol",
-        type=float,
-        default=1e-8,
-        help="convergence tolerance for velocity"
-    )
-    parser.add_argument(
-        "-p",
-        "--p_tol",
-        type=float,
-        default=1e-5,
-        help="convergence tolerance for pressure"
-    )
-    parser.add_argument(
-        "-i",
-        "--it_max",
-        type=int,
-        default=int(1e4),
-        help="maximum iteration for PPE"
-    )
-    args = parser.parse_args()
-    return args
+parser = argparse.ArgumentParser()
+parser.add_argument("-d", "--dx", type=float, default=5e-3, help="grid spacing")
+parser.add_argument("-r", "--Re", type=float, default=1000., help="Reynolds number")
+parser.add_argument("-t", "--time", type=float, default=200., help="maximum simulation time")
+parser.add_argument("-u", "--u_tol", type=float, default=1e-8, help="convergence tolerance for velocity")
+parser.add_argument("-p", "--p_tol", type=float, default=1e-5, help="convergence tolerance for pressure")
+parser.add_argument("-i", "--it_max", type=int, default=int(1e4), help="maximum iteration for PPE")
+args = parser.parse_args()
 
-################################################################################
 
-def main(args):
-    # arguments
-    args = args
-    dx = args.dx
-    Re = args.Re
-
+def plot_setting():
     # visualization setting
     plt.rcParams["font.family"] = "Times New Roman"
     plt.rcParams["mathtext.fontset"] = "cm"
     plt.rcParams["legend.framealpha"] = 1.
     plt.rcParams["figure.figsize"] = (7, 5)
     plt.rcParams["savefig.dpi"] = 300
+
+
+def main():
+    # plot setting
+    plot_setting()
+
+    # arguments
+    dx = args.dx
+    Re = args.Re
 
     # domain
     Lx, Ly = 1., 1.
@@ -493,10 +450,8 @@ def main(args):
         x=x, y=y, X=X, Y=Y, u=u, v=v, p=p
     )
 
-################################################################################
 
 if __name__ == "__main__":
-    args = arguments()
-    main(args)
+    main()
 
 
