@@ -1,6 +1,16 @@
 # Cavity_FDM_NumPy2
 
-Updated version of [Cavity_FDM_NumPy](https://github.com/ShotaDeguchi/Cavity_FDM_NumPy)
+This is an updated version [Cavity_FDM_NumPy](https://github.com/ShotaDeguchi/Cavity_FDM_NumPy). 
+
+## Problem setup
+Lid-driven cavity flow is a fundamental problem in fluid mechanics used to test and validate numerical methods for simulating fluid dynamics, especially in confined spaces. 
+
+An incompressible Newtonian fluid is confined in a square cavity where the top lid is set to move at a constant velocity, inducing flow within the cavity. On the other three sides of the cavity, no-slip boundary conditions are imposed to ensure that the fluid velocity is zero. A homogeneous Neumann boundary condition is imposed on all sides of the wall, i.e. the pressure gradient along the wall is zero (a homogeneous Dirichlet condition is applied at the bottom left corner). 
+
+This repository provides NumPy implementation and comparison of
+* different convection schemes
+* different grid systems
+which are often used in the finite difference method.
 
 For a mathematical understanding of finite difference methods, a great resource can be found [here](https://folk.ntnu.no/leifh/teaching/tkt4140/._main000.html). 
 
@@ -86,7 +96,7 @@ Following quantities are presented:
 | u | Horizontal velocity along the geometric center |
 | v | Vertical velocity along the geometric center |
 
-### Same grid systems (Arakawa-B), different convection schemes
+### Comparison of different convection schemes (using the same grid system)
 To illustrate the difference due to spatial schemes for convection (2nd order central difference is used for pressure gradient and diffusion), we first present the results obtained with different schemes using the same grid system (here Arakawa-B). The Reynolds number is set to $\mathrm{Re} = 1,000$ and the spatial resolution is $\Delta x = 5 \times 10^{-3}$. 
 
 | Scheme | vel | prs | vor | u | v |
@@ -97,7 +107,7 @@ To illustrate the difference due to spatial schemes for convection (2nd order ce
 | QUICKEST | ![img](01_Arakawa_B/03_QUICKEST/Re1000/velocity_norm.png) | ![img](01_Arakawa_B/03_QUICKEST/Re1000/pressure.png) | ![img](01_Arakawa_B/03_QUICKEST/Re1000/vorticity.png) | ![img](01_Arakawa_B/03_QUICKEST/Re1000/u.png) | ![img](01_Arakawa_B/03_QUICKEST/Re1000/v.png) |
 | Kawamura-Kuwahara | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/velocity_norm.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/pressure.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/vorticity.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/u.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/v.png) |
 
-### Same convection scheme (Kawamura-Kuwahara), different grid systems
+### Comparison of different grid systems (using the same convection scheme)
 Next, to realize the difference due to the choice of grid system, we now present the results by difference grid while using the same spatial schemes (Kawamura-Kuwahara for convection, central difference for pressure gradient and diffusion). The Reynolds number is set to $\mathrm{Re} = 1,000$ and the spatial resolution is $\Delta x = 5 \times 10^{-3}$. 
 
 | Grid | vel | prs | div | u | v |
