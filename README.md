@@ -46,7 +46,7 @@ where the intermediate velocity field, $\mathbf{u}^{(*)}$, is introduced. Enforc
 ```
 In summary, time marching is performed in the following manner:
 1. Get the intermediate velocity field: $\mathbf{u}^{(*)} = \mathbf{u}^{(n)} + \Delta t \left( - \left( \mathbf{u}^{(n)} \cdot \nabla \right) \mathbf{u}^{(n)} + \nabla^2 \mathbf{u}^{(n)} / \mathrm{Re} \right)$
-2. Get the next pressure field: $\nabla^2 p^{(n+1)} = \nabla \cdot \mathbf{u}^{(*)} / \Delta t$
+2. Solve for the next pressure field: $\nabla^2 p^{(n+1)} = \nabla \cdot \mathbf{u}^{(*)} / \Delta t$
 3. Get the next velocity field: $\mathbf{u}^{(n+1)} = \mathbf{u}^{(*)} + \Delta t \left( - \nabla p^{(n+1)} \right)$
 
 ### Discretization - spatial direction
