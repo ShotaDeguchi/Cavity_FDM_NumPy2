@@ -37,7 +37,7 @@ We employ Chorin's projection method (Chorin1968), i.e. split 1 timestep into *p
   \frac{\mathbf{u}^{(n+1)} - \mathbf{u}^{(*)}}{\Delta t} &= - \nabla p^{(n+1)}
 \end{align}
 ```
-where the intermediate velocity field, $\mathbf{u}^{(*)}$, is introduced. Enforcing the continuity at the next timestep yields the following pressure Poisson equation: 
+where the intermediate velocity field, $\mathbf{u}^{(*)}$, is introduced. Enforcing the continuity at the next timestep ($\nabla \cdot \mathbf{u}^{(n+1)} = 0$) yields the following pressure Poisson equation: 
 ```math
 \begin{align}
   \nabla \cdot \left( \frac{\mathbf{u}^{(n+1)} - \mathbf{u}^{(*)}}{\Delta t} \right) &= - \nabla \cdot \nabla p^{(n+1)} \\
