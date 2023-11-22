@@ -153,10 +153,11 @@ def main():
     h = min(dx, dy)  # characteristic length (discretization parameter)
     k = 1. / Re      # diffusion rate
 
-    dt1 = h / U                # CFL
-    dt2 = 1. / 2. * h**2 / k   # diffusion
-    dt = min(dt1, dt2)         # critical timestep
-    dt *= .2                   # safety
+    M = 2
+    dt1 = h / (U * M)                # CFL
+    dt2 = 1. / 2. * h**2 / (k * M)   # diffusion
+    dt = min(dt1, dt2)               # critical timestep
+    dt *= .4                         # safety
 
     # coefficient for numerical diffusion
     beta = 1. / 4.
@@ -251,8 +252,10 @@ def main():
         n += 1
         t += dt
         u_res = np.sqrt(np.sum((u - u_old)**2)) / np.sqrt(np.sum(u_old**2))
+        C = u * dt / dx + v * dt / dy
+        D = k * dt / dx**2 + k * dt / dy**2
         print(f"\n****************************************************************")
-        print(f">>> main -> it: {n:d}, t: {t:.3f}, dt: {dt:.3e}, u_res: {u_res:.6e}")
+        print(f">>> main -> it: {n:d}, t: {t:.3f}, dt: {dt:.3e}, u_res: {u_res:.6e}, C: {np.max(C):.3f}, D: {np.max(D):.3f}")
         print(f"****************************************************************")
         if u_res < u_tol:
             print("   >>> main converged")
