@@ -35,7 +35,7 @@ parser.add_argument("-r", "--Re", type=float, default=1000., help="Reynolds numb
 parser.add_argument("-t", "--time", type=float, default=200., help="maximum simulation time")
 parser.add_argument("-u", "--u_tol", type=float, default=1e-8, help="convergence tolerance for velocity")
 parser.add_argument("-p", "--p_tol", type=float, default=1e-5, help="convergence tolerance for pressure")
-parser.add_argument("-i", "--it_max", type=int, default=int(1e4), help="maximum iteration for PPE")
+parser.add_argument("-i", "--it_max", type=int, default=int(5e3), help="maximum iteration for PPE")
 args = parser.parse_args()
 
 
@@ -105,9 +105,9 @@ def Jacobi(p, b, dx, dy, nx, ny, it_max, tol):
         p[-1, :] = p[-2, :]   # North
         p[:,  0] = p[:,  1]   # West
         p[:, -1] = p[:, -2]   # East
-        p[0, int(nx / 2)] = 0.   # bottom center
+        # p[0, int(nx / 2)] = 0.   # bottom center
         # p[1, int(Nx / 2)] = 0.   # bottom center
-        # p[1, 1] = 0.   # bottom left corner
+        p[1, 1] = 0.   # bottom left corner
 
         # converged?
         p_res = np.sqrt(np.sum((p - p_old)**2)) / np.sqrt(np.sum(p_old**2))
@@ -185,7 +185,9 @@ def main():
     dir_fig_velocity_u = os.path.join(dir_res, "velocity_u")
     dir_fig_velocity_v = os.path.join(dir_res, "velocity_v")
     dir_fig_divergence_hat = os.path.join(dir_res, "divergence_hat")
+    dir_fig_streamline = os.path.join(dir_res, "streamline")
     dir_fig_pressure = os.path.join(dir_res, "pressure")
+    dir_fig_pressure_bar = os.path.join(dir_res, "pressure_bar")
     dir_fig_divergence = os.path.join(dir_res, "divergence")
     dir_fig_vorticity = os.path.join(dir_res, "vorticity")
     dir_fig_u = os.path.join(dir_res, "u")
@@ -195,7 +197,9 @@ def main():
     os.makedirs(dir_fig_velocity_u, exist_ok=True)
     os.makedirs(dir_fig_velocity_v, exist_ok=True)
     os.makedirs(dir_fig_divergence_hat, exist_ok=True)
+    os.makedirs(dir_fig_streamline, exist_ok=True)
     os.makedirs(dir_fig_pressure, exist_ok=True)
+    os.makedirs(dir_fig_pressure_bar, exist_ok=True)
     os.makedirs(dir_fig_divergence, exist_ok=True)
     os.makedirs(dir_fig_vorticity, exist_ok=True)
     os.makedirs(dir_fig_u, exist_ok=True)
@@ -276,7 +280,7 @@ def main():
             plt.ylim(0., Ly)
             plt.xlabel(r"$x$")
             plt.ylabel(r"$y$")
-            plt.title(f"Velocity norm ($\mathrm{{Re}}={Re}, t={t:.2f}, \mathrm{{res}}={u_res:.2e}$)")
+            # plt.title(f"Velocity norm ($\mathrm{{Re}}={Re}, t={t:.2f}, \mathrm{{res}}={u_res:.2e}$)")
             plt.tight_layout()
             plt.savefig(os.path.join(dir_res, f"velocity_norm.png"), dpi=300)
             plt.savefig(os.path.join(dir_fig_velocity_norm, f"velocity_norm_n{n:d}.png"), dpi=300)
@@ -292,7 +296,7 @@ def main():
             plt.ylim(0., Ly)
             plt.xlabel(r"$x$")
             plt.ylabel(r"$y$")
-            plt.title(f"Horizontal velocity ($\mathrm{{Re}}={Re}, t={t:.2f}$)")
+            # plt.title(f"Horizontal velocity ($\mathrm{{Re}}={Re}, t={t:.2f}$)")
             plt.tight_layout()
             plt.savefig(os.path.join(dir_res, f"velocity_u.png"), dpi=300)
             plt.savefig(os.path.join(dir_fig_velocity_u, f"velocity_u_n{n:d}.png"), dpi=300)
@@ -308,7 +312,7 @@ def main():
             plt.ylim(0., Ly)
             plt.xlabel(r"$x$")
             plt.ylabel(r"$y$")
-            plt.title(f"Vertical velocity ($\mathrm{{Re}}={Re}, t={t:.2f}$)")
+            # plt.title(f"Vertical velocity ($\mathrm{{Re}}={Re}, t={t:.2f}$)")
             plt.tight_layout()
             plt.savefig(os.path.join(dir_res, f"velocity_v.png"), dpi=300)
             plt.savefig(os.path.join(dir_fig_velocity_v, f"velocity_v_n{n:d}.png"), dpi=300)
@@ -324,7 +328,7 @@ def main():
             plt.ylim(0., Ly)
             plt.xlabel(r"$x$")
             plt.ylabel(r"$y$")
-            plt.title(f"Divergence of intermediate velocity ($\mathrm{{Re}}={Re}, t={t:.2f}$)")
+            # plt.title(f"Divergence of intermediate velocity ($\mathrm{{Re}}={Re}, t={t:.2f}$)")
             plt.tight_layout()
             plt.savefig(os.path.join(dir_res, f"divergence_hat.png"), dpi=300)
             plt.savefig(os.path.join(dir_fig_divergence_hat, f"divergence_hat_n{n:d}.png"), dpi=300)
@@ -342,9 +346,10 @@ def main():
             plt.ylim(0., Ly)
             plt.xlabel(r"$x$")
             plt.ylabel(r"$y$")
-            plt.title(f"Streamline, ($\mathrm{{Re}}={Re}, t={t:.2f}$)")
+            # plt.title(f"Streamline, ($\mathrm{{Re}}={Re}, t={t:.2f}$)")
             plt.tight_layout()
             plt.savefig(os.path.join(dir_res, f"streamline.png"), dpi=300)
+            plt.savefig(os.path.join(dir_fig_streamline, f"streamline_n{n:d}.png"), dpi=300)
             plt.close()
 
             # # divergence & vorticity (for Arakawa A-type grid)
@@ -375,7 +380,7 @@ def main():
             plt.ylim(0., Ly)
             plt.xlabel(r"$x$")
             plt.ylabel(r"$y$")
-            plt.title(f"Divergence ($\mathrm{{Re}}={Re}, t={t:.2f}$)")
+            # plt.title(f"Divergence ($\mathrm{{Re}}={Re}, t={t:.2f}$)")
             plt.tight_layout()
             plt.savefig(os.path.join(dir_res, f"divergence.png"), dpi=300)
             plt.savefig(os.path.join(dir_fig_divergence, f"divergence_n{n:d}.png"), dpi=300)
@@ -390,13 +395,13 @@ def main():
             vmin, vmax = -5., 5.
             levels = np.linspace(vmin, vmax, 32)
             ticks = np.linspace(vmin, vmax, 5)
-            plt.contourf(X[:-1, :-1] + dx / 2., Y[:-1, :-1] + dy / 2., vor_u, cmap="coolwarm", levels=levels, extend="both")
+            plt.contour(X[:-1, :-1] + dx / 2., Y[:-1, :-1] + dy / 2., vor_u, cmap="seismic", levels=levels, extend="both")
             plt.colorbar(ticks=ticks, extend="both", label=r"$\omega$")
             plt.xlim(0., Lx)
             plt.ylim(0., Ly)
             plt.xlabel(r"$x$")
             plt.ylabel(r"$y$")
-            plt.title(f"Vorticity ($\mathrm{{Re}}={Re}, t={t:.2f}$)")
+            # plt.title(f"Vorticity ($\mathrm{{Re}}={Re}, t={t:.2f}$)")
             plt.tight_layout()
             plt.savefig(os.path.join(dir_res, f"vorticity.png"), dpi=300)
             plt.savefig(os.path.join(dir_fig_vorticity, f"vorticity_n{n:d}.png"), dpi=300)
@@ -406,13 +411,30 @@ def main():
             vmin, vmax = -.1, .1
             levels = np.linspace(vmin, vmax, 32)
             ticks = np.linspace(vmin, vmax, 5)
-            plt.contourf(X[:-1, :-1], Y[:-1, :-1], p - np.mean(p), cmap="turbo", levels=levels, extend="both")
+            p_bar = p - np.mean(p)
+            plt.contourf(X[:-1, :-1], Y[:-1, :-1], p_bar, cmap="turbo", levels=levels, extend="both")
             plt.colorbar(ticks=ticks, extend="both", label=r"$p$")
             plt.xlim(0., Lx)
             plt.ylim(0., Ly)
             plt.xlabel(r"$x$")
             plt.ylabel(r"$y$")
-            plt.title(f"Pressure ($\mathrm{{Re}}={Re}, t={t:.2f}$)")
+            # plt.title(f"Pressure ($\mathrm{{Re}}={Re}, t={t:.2f}$)")
+            plt.tight_layout()
+            plt.savefig(os.path.join(dir_res, f"pressure_bar.png"), dpi=300)
+            plt.savefig(os.path.join(dir_fig_pressure_bar, f"pressure_bar_n{n:d}.png"), dpi=300)
+            plt.close()
+
+            plt.figure(figsize=(5, 4))
+            vmin, vmax = -.1, .1
+            levels = np.linspace(vmin, vmax, 32)
+            ticks = np.linspace(vmin, vmax, 5)
+            plt.contourf(X[:-1, :-1], Y[:-1, :-1], p, cmap="turbo", levels=levels, extend="both")
+            plt.colorbar(ticks=ticks, extend="both", label=r"$p$")
+            plt.xlim(0., Lx)
+            plt.ylim(0., Ly)
+            plt.xlabel(r"$x$")
+            plt.ylabel(r"$y$")
+            # plt.title(f"Pressure ($\mathrm{{Re}}={Re}, t={t:.2f}$)")
             plt.tight_layout()
             plt.savefig(os.path.join(dir_res, f"pressure.png"), dpi=300)
             plt.savefig(os.path.join(dir_fig_pressure, f"pressure_n{n:d}.png"), dpi=300)
@@ -420,26 +442,26 @@ def main():
 
             # compare with reference solutions
             plt.figure(figsize=(4, 4))
-            plt.scatter(df_Ghia["u"],   df_Ghia["y"],   alpha=.7, marker="1", label="Ghia et al. 1982")
-            plt.scatter(df_Erturk["u"], df_Erturk["y"], alpha=.7, marker="2", label="Erturk et al. 2005")
-            plt.plot(u[1:-1, int(Ny/2)], y[1:-1], alpha=.7, color="k", ls="--", label="Present")
+            plt.scatter(df_Ghia["u"],   df_Ghia["y"],   alpha=.7, marker="+", label="Ghia et al. 1982")
+            plt.scatter(df_Erturk["u"], df_Erturk["y"], alpha=.7, marker="x", label="Erturk et al. 2005")
+            plt.plot(u[1:-1, int(Ny/2)], y[1:-1], alpha=.7, color="k", ls="--", label="FDM")
             plt.legend(loc="lower right")
             plt.xlabel(r"$u$")
             plt.ylabel(r"$y$")
-            plt.title(f"Horizontal velocity along the geometric center")
+            # plt.title(f"Horizontal velocity along the geometric center")
             plt.tight_layout()
             plt.savefig(os.path.join(dir_res, f"u.png"), dpi=300)
             plt.savefig(os.path.join(dir_fig_u, f"u_n{n:d}.png"), dpi=300)
             plt.close()
 
             plt.figure(figsize=(4, 4))
-            plt.scatter(df_Ghia["x"],   df_Ghia["v"],   alpha=.7, marker="1", label="Ghia et al. 1982")
-            plt.scatter(df_Erturk["x"], df_Erturk["v"], alpha=.7, marker="2", label="Erturk et al. 2005")
-            plt.plot(x[1:-1], v[int(Nx/2), 1:-1], alpha=.7, color="k", ls="--", label="Present")
+            plt.scatter(df_Ghia["x"],   df_Ghia["v"],   alpha=.7, marker="+", label="Ghia et al. 1982")
+            plt.scatter(df_Erturk["x"], df_Erturk["v"], alpha=.7, marker="x", label="Erturk et al. 2005")
+            plt.plot(x[1:-1], v[int(Nx/2), 1:-1], alpha=.7, color="k", ls="--", label="FDM")
             plt.legend(loc="upper right")
             plt.xlabel(r"$x$")
             plt.ylabel(r"$v$")
-            plt.title(f"Vertical velocity along the geometric center")
+            # plt.title(f"Vertical velocity along the geometric center")
             plt.tight_layout()
             plt.savefig(os.path.join(dir_res, f"v.png"), dpi=300)
             plt.savefig(os.path.join(dir_fig_v, f"v_n{n:d}.png"), dpi=300)
@@ -450,7 +472,7 @@ def main():
     os.makedirs(dir_npz, exist_ok=True)
     np.savez(
         os.path.join(dir_npz, "results.npz"),
-        x=x, y=y, X=X, Y=Y, u=u, v=v, p=p
+        x=x, y=y, X=X, Y=Y, u=u, v=v, p=p, p_bar=p_bar, div_u=div_u, vor_u=vor_u,
     )
 
 ################################################################################
