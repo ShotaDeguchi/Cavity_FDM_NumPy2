@@ -120,7 +120,7 @@ To illustrate the difference due to spatial schemes for convection (2nd order ce
 | Lax-Wendroff | ![img](01_Arakawa_B/01_Lax_Wendroff/Re1000/velocity_norm.png) | ![img](01_Arakawa_B/01_Lax_Wendroff/Re1000/pressure.png) | ![img](01_Arakawa_B/01_Lax_Wendroff/Re1000/vorticity.png) | ![img](01_Arakawa_B/01_Lax_Wendroff/Re1000/u.png) | ![img](01_Arakawa_B/01_Lax_Wendroff/Re1000/v.png) |
 | QUICK | ![img](01_Arakawa_B/02_QUICK/Re1000/velocity_norm.png) | ![img](01_Arakawa_B/02_QUICK/Re1000/pressure.png) | ![img](01_Arakawa_B/02_QUICK/Re1000/vorticity.png) | ![img](01_Arakawa_B/02_QUICK/Re1000/u.png) | ![img](01_Arakawa_B/02_QUICK/Re1000/v.png) |
 | QUICKEST | ![img](01_Arakawa_B/03_QUICKEST/Re1000/velocity_norm.png) | ![img](01_Arakawa_B/03_QUICKEST/Re1000/pressure.png) | ![img](01_Arakawa_B/03_QUICKEST/Re1000/vorticity.png) | ![img](01_Arakawa_B/03_QUICKEST/Re1000/u.png) | ![img](01_Arakawa_B/03_QUICKEST/Re1000/v.png) |
-| Kawamura-Kuwahara | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/velocity_norm.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/pressure.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/vorticity.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/u.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/v.png) |
+| Kawamura-Kuwahara | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/velocity_norm.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/pressure_bar.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/vorticity.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/u.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/v.png) |
 
 ### Comparison of different grid systems (using the same convection scheme)
 Next, to realize the difference due to the choice of grid system, we now present the results by difference grid while using the same spatial schemes (Kawamura-Kuwahara for convection, central difference for pressure gradient and diffusion). The Reynolds number is set to $\mathrm{Re} = 1,000$ and the spatial resolution is $\Delta x = 5 \times 10^{-3}$. 
@@ -128,7 +128,7 @@ Next, to realize the difference due to the choice of grid system, we now present
 | Grid | vel | prs | div | u | v |
 | :--- | :---: | :---: | :---: | :---: | :---: |
 | Arakawa-A | ![img](00_Arakawa_A/04_Kawamura_Kuwahara/Re1000/velocity_norm.png) | ![img](00_Arakawa_A/04_Kawamura_Kuwahara/Re1000/pressure.png) | ![img](00_Arakawa_A/04_Kawamura_Kuwahara/Re1000/divergence.png) | ![img](00_Arakawa_A/04_Kawamura_Kuwahara/Re1000/u.png) | ![img](00_Arakawa_A/04_Kawamura_Kuwahara/Re1000/v.png) |
-| Arakawa-B | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/velocity_norm.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/pressure.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/divergence.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/u.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/v.png) |
+| Arakawa-B | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/velocity_norm.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/pressure_bar.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/divergence.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/u.png) | ![img](01_Arakawa_B/04_Kawamura_Kuwahara/Re1000/v.png) |
 | Arakawa-C | ![img](02_Arakawa_C/04_Kawamura_Kuwahara/Re1000/velocity_norm.png) | ![img](02_Arakawa_C/04_Kawamura_Kuwahara/Re1000/pressure.png) | ![img](02_Arakawa_C/04_Kawamura_Kuwahara/Re1000/divergence.png) | ![img](02_Arakawa_C/04_Kawamura_Kuwahara/Re1000/u.png) | ![img](02_Arakawa_C/04_Kawamura_Kuwahara/Re1000/v.png) |
 
 ## License
