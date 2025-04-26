@@ -2,6 +2,8 @@
 
 This is an updated version of [Cavity_FDM_NumPy](https://github.com/ShotaDeguchi/Cavity_FDM_NumPy). 
 
+Simple tute scripts can be found at [Cavity_FDM_tute](https://github.com/ShotaDeguchi/Cavity_FDM_tute).
+
 ## Problem setup
 Lid-driven cavity flow is a fundamental problem in fluid mechanics used to test and validate numerical methods for simulating fluid dynamics, especially in confined spaces. 
 
