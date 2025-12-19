@@ -56,8 +56,9 @@ Kuwahara-Kawamura scheme uses 5-point stencil along 1 axis. Considering the sign
 ```math
   c \frac{\partial \phi}{\partial x} \approx
     \begin{cases}
-      c \left( 2 \phi_{i+1} + 3 \phi_{i} - 6 \phi_{i-1} +   \phi_{i-2} \right) / \left( 6 \Delta x \right) & \text{if $c \ge 0$} \\
-      c \left( - \phi_{i+2} + 6 \phi_{i+1} - 3 \phi_{i} - 2 \phi_{i-1} \right) / \left( 6 \Delta x \right) & \text{if $c \lt 0$}
+      c \left( 2 \phi_{i+1} + 3 \phi_{i} - 6 \phi_{i-1} +   \phi_{i-2} \right) / \left( 6 \Delta x \right) & \text{ if } c \ge 0
+      \\
+      c \left( - \phi_{i+2} + 6 \phi_{i+1} - 3 \phi_{i} - 2 \phi_{i-1} \right) / \left( 6 \Delta x \right) & \text{ if } c \lt 0
     \end{cases}
 ```
 Using the relation of $c = \left( c + |c| \right) / 2 + \left( c - |c| \right) / 2 $, we get:
